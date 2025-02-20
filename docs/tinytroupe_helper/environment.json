@@ -1,0 +1,47 @@
+{
+  "class": "TinyWorld",
+  "description": "Base class for environments where TinyPerson agents exist and interact",
+  "key_features": {
+    "agent_management": {
+      "add_agents": "Add multiple agents to environment",
+      "add_agent": "Add single agent with unique name",
+      "remove_agent": "Remove specific agent",
+      "get_agent_by_name": "Retrieve agent by name",
+      "make_everyone_accessible": "Makes all agents accessible to each other"
+    },
+    "simulation_control": {
+      "run": "Run environment for specified steps",
+      "skip": "Skip specified number of steps",
+      "time_controls": {
+        "run_minutes": "Run simulation in minute increments",
+        "run_hours": "Run simulation in hour increments", 
+        "run_days": "Run simulation in day increments",
+        "run_weeks": "Run simulation in week increments",
+        "run_months": "Run simulation in month increments",
+        "run_years": "Run simulation in year increments"
+      }
+    },
+    "interaction_methods": {
+      "broadcast": "Deliver message to all agents",
+      "broadcast_thought": "Share thought with all agents",
+      "broadcast_internal_goal": "Share goal with all agents",
+      "broadcast_context_change": "Update context for all agents"
+    },
+    "action_handling": {
+      "REACH_OUT": "Allow agents to connect with each other",
+      "TALK": "Enable communication between agents"
+    }
+  },
+  "initialization_params": {
+    "name": "Name of environment (string)",
+    "agents": "List of agents to add initially",
+    "initial_datetime": "Starting datetime (optional)",
+    "interventions": "List of interventions to apply",
+    "broadcast_if_no_target": "Whether to broadcast actions with no target (boolean)",
+    "max_additional_targets_to_display": "Max number of additional targets to show"
+  },
+  "state_management": {
+    "encode_complete_state": "Serialize environment state to dictionary",
+    "decode_complete_state": "Restore environment state from dictionary"
+  }
+}

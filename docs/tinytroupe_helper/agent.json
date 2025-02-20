@@ -1,0 +1,98 @@
+{
+  "TinyPerson": {
+    "description": "A simulated person in the TinyTroupe universe. Agents are the key abstraction used in TinyTroupe. An agent is a simulated person or entity that can interact with other agents and the environment by receiving stimuli and producing actions.",
+    "creation": {
+      "constructor": {
+        "name": "required, string - The name of the TinyPerson",
+        "episodic_memory": "optional, EpisodicMemory instance for storing temporal experiences",
+        "semantic_memory": "optional, SemanticMemory instance for storing factual knowledge",
+        "mental_faculties": "optional, list of cognitive abilities like RecallFaculty"
+      },
+      "from_json": {
+        "method": "load_spec",
+        "description": "Load agent from JSON specification file"
+      }
+    },
+    "configuration": {
+      "method": "define",
+      "description": "Define agent properties like age, nationality, occupation etc.",
+      "properties": {
+        "name": "string",
+        "age": "number",
+        "nationality": "string", 
+        "country_of_residence": "string",
+        "occupation": "object with title, organization, description",
+        "personality_traits": "array of trait descriptions",
+        "professional_interests": "array of interests",
+        "personal_interests": "array of interests",
+        "skills": "array of skills",
+        "relationships": "array of relationship objects",
+        "current_location": "string",
+        "current_context": "array of context descriptions",
+        "current_goals": "array of goals",
+        "current_emotions": "string describing emotional state"
+      }
+    },
+    "core_methods": {
+      "stimuli": {
+        "listen": "Receive speech input from another agent",
+        "see": "Receive visual descriptions",
+        "think": "Process internal thoughts",
+        "socialize": "Receive social stimuli",
+        "internalize_goal": "Set internal goals"
+      },
+      "actions": {
+        "act": "Generate actions in response to stimuli",
+        "listen_and_act": "Convenience method combining listen and act",
+        "see_and_act": "Convenience method combining see and act", 
+        "think_and_act": "Convenience method combining think and act"
+      }
+    },
+    "memory": {
+      "episodic": {
+        "description": "Stores temporal experiences and interactions",
+        "methods": {
+          "store": "Store new memory",
+          "retrieve": "Get memories with first_n and last_n options",
+          "retrieve_recent": "Get most recent memories",
+          "retrieve_all": "Get all memories"
+        }
+      },
+      "semantic": {
+        "description": "Stores factual knowledge and information",
+        "methods": {
+          "add_documents_path": "Load documents from folder",
+          "add_web_urls": "Load documents from web URLs",
+          "retrieve_relevant": "Get relevant facts based on query",
+          "retrieve_document_content_by_name": "Get specific document content"
+        }
+      }
+    },
+    "mental_faculties": {
+      "RecallFaculty": {
+        "description": "Enables memory recall capabilities",
+        "actions": {
+          "RECALL": "Recall information from semantic memory using mental queries"
+        }
+      },
+      "FilesAndWebGroundingFaculty": {
+        "description": "Enables access to local files and web content",
+        "actions": {
+          "LIST_DOCUMENTS": "List available documents",
+          "CONSULT": "Access specific document content"
+        }
+      },
+      "TinyToolUse": {
+        "description": "Enables use of tools to accomplish tasks",
+        "actions": "Defined by the specific tools provided"
+      }
+    },
+    "environment_interaction": {
+      "move_to": "Change agent's location",
+      "change_context": "Update agent's context",
+      "make_agent_accessible": "Allow interaction with another agent",
+      "make_agent_inaccessible": "Prevent interaction with an agent",
+      "make_all_agents_inaccessible": "Prevent interaction with all agents"
+    }
+  }
+}

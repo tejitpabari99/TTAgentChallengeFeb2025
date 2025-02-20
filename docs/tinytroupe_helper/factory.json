@@ -1,0 +1,63 @@
+{
+  "factories": {
+    "TinyFactory": {
+      "description": "Base class for factories that create simulation components",
+      "key_features": {
+        "state_management": {
+          "encode_complete_state": "Serialize factory state",
+          "decode_complete_state": "Restore factory state"
+        },
+        "factory_management": {
+          "add_factory": "Add factory to global registry",
+          "clear_factories": "Clear all registered factories"
+        }
+      },
+      "initialization_params": {
+        "simulation_id": "Optional ID of simulation context"
+      }
+    },
+    "TinyPersonFactory": {
+      "description": "Specialized factory for generating TinyPerson instances using LLMs",
+      "key_features": {
+        "person_generation": {
+          "generate_person": {
+            "description": "Generate single TinyPerson instance",
+            "params": {
+              "agent_particularities": "Specific traits/characteristics",
+              "temperature": "LLM sampling temperature",
+              "frequency_penalty": "Control repetition in generation",
+              "presence_penalty": "Control topic diversity",
+              "attempts": "Max generation attempts"
+            }
+          },
+          "generate_people": {
+            "description": "Generate multiple TinyPerson instances",
+            "additional_params": {
+              "number_of_people": "Number of instances to generate",
+              "verbose": "Enable detailed output"
+            }
+          }
+        },
+        "factory_generation": {
+          "generate_person_factories": {
+            "description": "Generate multiple TinyPersonFactory instances",
+            "params": {
+              "number_of_factories": "Number of factories to create",
+              "generic_context_text": "Context for factory generation"
+            }
+          }
+        }
+      },
+      "initialization_params": {
+        "context_text": "Context for person generation",
+        "simulation_id": "Optional ID of simulation context"
+      },
+      "implementation_details": {
+        "name_uniqueness": "Ensures generated agent names are unique",
+        "caching": "Uses transactional caching for LLM calls",
+        "templates": "Uses Mustache templates for prompt generation",
+        "example_based": "Uses predefined agent examples for generation guidance"
+      }
+    }
+  }
+}
