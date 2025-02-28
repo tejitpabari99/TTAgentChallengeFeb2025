@@ -12,7 +12,7 @@ ALLOWED_EXTENSIONS = {'pptx'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024 * 1024  # 16MB max file size
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -68,6 +68,29 @@ Media Files: {len(extractor.media_files)} files extracted
                 # Get remaining text content and notes
                 text_content = "\n\n".join(extractor.text_content[1:]) if len(extractor.text_content) > 1 else ""
                 notes_content = "\n\n".join(extractor.notes_content) if extractor.notes_content else ""
+
+                # Create JSON structure for slides
+                slides_data = {}
+                for i, text in enumerate(extractor.text_content):
+                    slide_num = i + 1
+                    slide_text = text.split('\n', 1)[1] if '\n' in text else text  # Remove "Slide X:" prefix
+                    
+                    # Find corresponding notes for this slide
+                    slide_notes = ""
+                    for note in extractor.notes_content:
+                        if note.startswith(f"Slide {slide_num} Notes:"):
+                            slide_notes = note.split('\n', 1)[1] if '\n' in note else ""
+                            break
+                    
+                    slides_data[f"slide{slide_num}"] = {
+                        "text": slide_text,
+                        "notes": slide_notes
+                    }
+                
+                # Save to JSON file
+                import json
+                with open('slides_content.json', 'w', encoding='utf-8') as f:
+                    json.dump(slides_data, f, indent=2, ensure_ascii=False)
                 
                 # Clean up uploaded file
                 os.remove(filepath)
