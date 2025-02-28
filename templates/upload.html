@@ -98,7 +98,23 @@
             </div>
         {% endif %}
 
-        {# Commented out sections for further processing
+        {# 
+        All slide content is automatically saved to slides_content.json in the following format:
+        {
+            "slide1": {
+                "text": "First slide content without the 'Slide 1:' prefix",
+                "notes": "Notes for slide 1 without the 'Slide 1 Notes:' prefix"
+            },
+            "slide2": {
+                "text": "Second slide content...",
+                "notes": "Notes for slide 2..."
+            }
+        }
+
+        The JSON file is updated every time a new presentation is uploaded.
+        The file is saved in the root directory of the project.
+        
+        Previously displayed sections (now saved to JSON instead):
         {% if summary %}
             <div class="section">
                 <h2>Summary</h2>
