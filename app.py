@@ -62,8 +62,17 @@ Notes Extractions: {len(extractor.notes_content)} slides with notes
 Media Files: {len(extractor.media_files)} files extracted
 """
                 
-                # Extract first slide content separately
-                first_slide_content = extractor.text_content[0].split('\n', 1)[1] if extractor.text_content else ""
+                # Extract title and description from first slide content
+                if extractor.text_content:
+                    first_slide_text = extractor.text_content[0].split('\n', 1)[1] if '\n' in extractor.text_content[0] else extractor.text_content[0]
+                    
+                    # Extract title (first line) and description (rest of content)
+                    lines = first_slide_text.split('\n')
+                    title = lines[0].strip()
+                    description = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ""
+                else:
+                    title = ""
+                    description = ""
                 
                 # Get remaining text content and notes
                 text_content = "\n\n".join(extractor.text_content[1:]) if len(extractor.text_content) > 1 else ""
@@ -97,7 +106,8 @@ Media Files: {len(extractor.media_files)} files extracted
                 
                 return render_template('upload.html', 
                                      summary=summary,
-                                     first_slide_content=first_slide_content,
+                                     title=title,
+                                     description=description,
                                      text_content=text_content,
                                      notes_content=notes_content)
             
@@ -110,14 +120,33 @@ Media Files: {len(extractor.media_files)} files extracted
             flash('Only .pptx files are allowed')
             return render_template('upload.html')
     
-    return render_template('upload.html', summary=None, first_slide_content=None, text_content=None, notes_content=None)
+    return render_template('upload.html', summary=None, title=None, description=None, text_content=None, notes_content=None)
 
-@app.route('/update_context', methods=['POST'])
-def update_context():
-    context = request.form.get('context', '')
-    # Here you can store or process the updated context
+@app.route('/update_presentation_info', methods=['POST'])
+def update_presentation_info():
+    # Check if the request is JSON
+    if request.is_json:
+        data = request.get_json()
+        title = data.get('title', '')
+        description = data.get('description', '')
+        intent = data.get('intent', '')
+        reviewers = data.get('reviewers', [])
+    else:
+        # Handle form data for backward compatibility
+        title = request.form.get('title', '')
+        description = request.form.get('description', '')
+        intent = request.form.get('intent', '')
+        reviewers = []
+    
+    # Here you can store the updated info
     # For now, we'll just return it as JSON
-    return jsonify({'status': 'success', 'context': context})
+    return jsonify({
+        'status': 'success', 
+        'title': title,
+        'description': description,
+        'intent': intent,
+        'reviewers': reviewers
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

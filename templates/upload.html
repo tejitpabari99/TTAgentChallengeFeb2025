@@ -3,53 +3,71 @@
 <head>
     <title>PowerPoint Content Extractor</title>
     <style>
+        /* PowerPoint theme colors */
+        :root {
+            --white: #ffffff;
+            --black: #000000;
+            --light-orange: #FFC299;
+            --dark-orange: #FF6600;
+            --gray: #f5f5f5;
+            --border-color: #e0e0e0;
+        }
+        
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--gray);
+            color: var(--black);
         }
         .container {
-            background-color: white;
-            padding: 20px;
+            background-color: var(--white);
+            padding: 24px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: var(--black);
+            margin-top: 0;
         }
         h1 {
-            color: #333;
             text-align: center;
+            margin-bottom: 24px;
         }
         .upload-form {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 24px;
         }
         .upload-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
+            background-color: var(--dark-orange);
+            color: var(--white);
+            padding: 12px 24px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 10px;
+            margin-top: 12px;
+            font-weight: bold;
         }
         .upload-button:hover {
-            background-color: #45a049;
+            background-color: #e55c00;
         }
         .flash-messages {
             margin: 20px 0;
-            padding: 10px;
+            padding: 12px;
             border-radius: 4px;
-            background-color: #ffebee;
-            color: #c62828;
+            background-color: #fff0e6;
+            color: var(--dark-orange);
+            border: 1px solid var(--light-orange);
         }
         .instructions {
             margin: 20px 0;
-            padding: 15px;
-            background-color: #e3f2fd;
+            padding: 16px;
+            background-color: #fff8f2;
             border-radius: 4px;
-            color: #1565c0;
+            color: #333;
+            border: 1px solid var(--light-orange);
         }
     </style>
 </head>
@@ -82,17 +100,71 @@
             <input type="submit" value="Upload & Extract" class="upload-button">
         </form>
 
-        {% if first_slide_content %}
+        {% if title is not none %}
             <div class="results">
                 <div class="section">
-                    <h2>Presentation Context</h2>
-                    <form id="contextForm" method="post" action="/update_context">
-                        <textarea id="presentationContext" name="context" class="editable-content" rows="5">{{ first_slide_content }}</textarea>
-                        <button type="submit" class="save-button">Save Context</button>
+                    <h2>Presentation Information</h2>
+                    <form id="presentationForm" method="post" action="/update_presentation_info">
+                        <div class="form-group">
+                            <label for="presentationTitle">Title:</label>
+                            <input type="text" id="presentationTitle" name="title" class="editable-content" value="{{ title }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="presentationDescription">Presentation Description:</label>
+                            <textarea id="presentationDescription" name="description" class="editable-content" rows="3">{{ description }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="presentationIntent">Intent:</label>
+                            <textarea id="presentationIntent" name="intent" class="editable-content" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-group reviewers-section">
+                            <div class="reviewers-header">
+                                <h3>Add Reviewers</h3>
+                                <button type="button" id="addReviewerBtn" class="add-reviewer-btn">+</button>
+                            </div>
+                            
+                            <div class="reviewers-table">
+                                <div class="reviewers-table-header">
+                                    <div class="audience-type-col">
+                                        <strong>Audience Type</strong>
+                                        <span class="hint">eg. technical expert, product user, etc</span>
+                                    </div>
+                                    <div class="audience-desc-col">
+                                        <strong>Audience Description</strong>
+                                        <span class="hint">eg. people in their 20s looking to date</span>
+                                    </div>
+                                </div>
+                                
+                                <div id="reviewersContainer" class="reviewers-container">
+                                    <!-- Reviewer rows will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="save-button">Save</button>
                     </form>
-                    <div class="context-display">
-                        <h3>Current Context:</h3>
-                        <pre id="currentContext">{{ first_slide_content }}</pre>
+                    
+                    <div class="info-display">
+                        <h3>Current Information:</h3>
+                        <div class="info-item">
+                            <strong>Title:</strong> <span id="currentTitle">{{ title }}</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Description:</strong> <pre id="currentDescription">{{ description }}</pre>
+                        </div>
+                        <div class="info-item">
+                            <strong>Intent:</strong> <pre id="currentIntent"></pre>
+                        </div>
+                        <div class="info-item" id="reviewersInfo">
+                            <strong>Reviewers:</strong>
+                            <div id="currentReviewers" class="reviewers-list">
+                                <!-- Reviewer information will be displayed here -->
+                                <div class="no-reviewers-msg">No reviewers added yet.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -140,99 +212,315 @@
 
     <style>
         .results {
-            margin-top: 30px;
-            border-top: 2px solid #eee;
-            padding-top: 20px;
+            margin-top: 32px;
+            border-top: 2px solid var(--light-orange);
+            padding-top: 24px;
         }
         .section {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
+            margin: 24px 0;
+            padding: 20px;
+            background-color: #fff8f2;
+            border-radius: 6px;
+            border: 1px solid var(--light-orange);
+        }
+        .section h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: var(--dark-orange);
         }
         pre {
             white-space: pre-wrap;
             word-wrap: break-word;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ddd;
+            background-color: var(--white);
+            padding: 12px;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             max-height: 400px;
             overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
         }
         .editable-content {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+            padding: 12px;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             font-family: monospace;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             resize: vertical;
+            font-size: 14px;
         }
         .save-button {
-            background-color: #2196F3;
-            color: white;
-            padding: 8px 16px;
+            background-color: var(--dark-orange);
+            color: var(--white);
+            padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-weight: bold;
         }
         .save-button:hover {
-            background-color: #1976D2;
+            background-color: #e55c00;
         }
-        .context-display {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #fff;
-            border: 1px solid #ddd;
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--black);
+        }
+        .info-display {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
             border-radius: 4px;
         }
-        .context-display h3 {
+        .info-display h3 {
             margin-top: 0;
-            color: #666;
-            font-size: 1em;
-            margin-bottom: 10px;
+            color: var(--dark-orange);
+            font-size: 16px;
+            margin-bottom: 12px;
         }
-        .context-display pre {
-            margin: 0;
-            background-color: #f8f9fa;
+        .info-item {
+            margin-bottom: 16px;
+        }
+        .info-item strong {
+            color: var(--black);
+        }
+        .info-item pre {
+            margin: 8px 0 0 0;
+            padding: 10px;
+            background-color: #fff8f2;
             font-family: monospace;
+            border: 1px solid var(--light-orange);
+        }
+        
+        /* Reviewers section styles */
+        .reviewers-section {
+            margin-top: 28px;
+            border-top: 1px solid var(--light-orange);
+            padding-top: 20px;
+        }
+        .reviewers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .reviewers-header h3 {
+            margin: 0;
+            color: var(--black);
+        }
+        .add-reviewer-btn {
+            background-color: var(--dark-orange);
+            color: var(--white);
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-reviewer-btn:hover {
+            background-color: #e55c00;
+        }
+        .reviewers-table {
+            border: 1px solid var(--light-orange);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .reviewers-table-header {
+            display: flex;
+            background-color: #fff0e6;
+            padding: 12px;
+            border-bottom: 1px solid var(--light-orange);
+        }
+        .audience-type-col, .audience-desc-col {
+            flex: 1;
+            padding: 0 12px;
+        }
+        .hint {
+            display: block;
+            font-size: 0.8em;
+            font-style: italic;
+            color: #666;
+            margin-top: 4px;
+        }
+        .reviewers-container {
+            padding: 12px;
+            background-color: var(--white);
+        }
+        .reviewer-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .reviewer-row:last-child {
+            margin-bottom: 0;
+        }
+        .reviewer-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin: 0 6px;
+            font-size: 14px;
+        }
+        .remove-reviewer-btn {
+            background-color: var(--dark-orange);
+            color: var(--white);
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 6px;
+        }
+        .remove-reviewer-btn:hover {
+            background-color: #e55c00;
+        }
+        
+        /* Reviewer display styles */
+        .reviewers-list {
+            margin-top: 8px;
+        }
+        .reviewer-item {
+            display: flex;
+            padding: 10px;
+            background-color: #fff8f2;
+            border: 1px solid var(--light-orange);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .reviewer-type {
+            font-weight: bold;
+            width: 40%;
+            padding-right: 12px;
+        }
+        .reviewer-desc {
+            width: 60%;
+        }
+        .no-reviewers-msg {
+            font-style: italic;
+            color: #666;
+            padding: 8px 0;
         }
     </style>
 
     <script>
-        document.getElementById('contextForm')?.addEventListener('submit', async (e) => {
+        // Add reviewer functionality
+        document.getElementById('addReviewerBtn')?.addEventListener('click', () => {
+            const container = document.getElementById('reviewersContainer');
+            const rowIndex = container.children.length;
+            
+            const reviewerRow = document.createElement('div');
+            reviewerRow.className = 'reviewer-row';
+            reviewerRow.innerHTML = `
+                <input type="text" name="audienceType[${rowIndex}]" class="reviewer-input" placeholder="Audience type">
+                <input type="text" name="audienceDesc[${rowIndex}]" class="reviewer-input" placeholder="Audience description">
+                <button type="button" class="remove-reviewer-btn">-</button>
+            `;
+            
+            // Add event listener to the remove button
+            const removeBtn = reviewerRow.querySelector('.remove-reviewer-btn');
+            removeBtn.addEventListener('click', function() {
+                reviewerRow.remove();
+            });
+            
+            container.appendChild(reviewerRow);
+        });
+        
+        // Form submission
+        document.getElementById('presentationForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const context = document.getElementById('presentationContext').value;
-            const currentContextDisplay = document.getElementById('currentContext');
+            const title = document.getElementById('presentationTitle').value;
+            const description = document.getElementById('presentationDescription').value;
+            const intent = document.getElementById('presentationIntent').value;
+            
+            // Collect reviewer data
+            const reviewers = [];
+            const reviewerRows = document.querySelectorAll('.reviewer-row');
+            reviewerRows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value.trim() || inputs[1].value.trim()) {
+                    reviewers.push([
+                        inputs[0].value.trim(),
+                        inputs[1].value.trim()
+                    ]);
+                }
+            });
             
             try {
-                const response = await fetch('/update_context', {
+                const response = await fetch('/update_presentation_info', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Content-Type': 'application/json',
                     },
-                    body: `context=${encodeURIComponent(context)}`
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        intent,
+                        reviewers
+                    })
                 });
                 
                 const data = await response.json();
                 if (data.status === 'success') {
                     // Update the display
-                    currentContextDisplay.textContent = context;
+                    document.getElementById('currentTitle').textContent = data.title;
+                    document.getElementById('currentDescription').textContent = data.description;
+                    document.getElementById('currentIntent').textContent = data.intent;
+                    
+                    // Update reviewers display
+                    const reviewersContainer = document.getElementById('currentReviewers');
+                    reviewersContainer.innerHTML = '';
+                    
+                    if (data.reviewers && data.reviewers.length > 0) {
+                        data.reviewers.forEach(reviewer => {
+                            const reviewerItem = document.createElement('div');
+                            reviewerItem.className = 'reviewer-item';
+                            reviewerItem.innerHTML = `
+                                <div class="reviewer-type">${reviewer[0]}</div>
+                                <div class="reviewer-desc">${reviewer[1]}</div>
+                            `;
+                            reviewersContainer.appendChild(reviewerItem);
+                        });
+                    } else {
+                        reviewersContainer.innerHTML = '<div class="no-reviewers-msg">No reviewers added yet.</div>';
+                    }
                     
                     // Show a temporary success message
                     const button = document.querySelector('.save-button');
                     const originalText = button.textContent;
                     button.textContent = 'Saved!';
-                    button.style.backgroundColor = '#4CAF50';
+                    button.style.backgroundColor = '#4CAF50'; // Success green
                     setTimeout(() => {
                         button.textContent = originalText;
-                        button.style.backgroundColor = '#2196F3';
+                        button.style.backgroundColor = 'var(--dark-orange)'; // Restore to theme color
                     }, 2000);
                 }
             } catch (error) {
-                console.error('Error saving context:', error);
-                alert('Error saving context. Please try again.');
+                console.error('Error saving information:', error);
+                alert('Error saving information. Please try again.');
+            }
+        });
+        
+        // Add an initial empty reviewer row when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('addReviewerBtn')) {
+                document.getElementById('addReviewerBtn').click();
             }
         });
     </script>
