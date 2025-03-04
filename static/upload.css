@@ -1,0 +1,436 @@
+:root {
+    --white: #ffffff;
+    --black: #000000;
+    --light-orange: #FFC299;
+    --dark-orange: #FF6600;
+    --gray: #f5f5f5;
+    --border-color: #e0e0e0;
+    --panel-bg: #fff8f2;
+    --shadow-color: rgba(0,0,0,0.1);
+}
+
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto 0 5%;
+    padding: 20px;
+    background-color: var(--gray);
+    color: var(--black);
+}
+.container {
+    background-color: var(--white);
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+h1, h2, h3 {
+    color: var(--black);
+    margin-top: 0;
+}
+h1 {
+    text-align: center;
+    margin-bottom: 24px;
+}
+.upload-form {
+    text-align: center;
+    margin-top: 24px;
+}
+.upload-button {
+    background-color: var(--dark-orange);
+    color: var(--white);
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 12px;
+    font-weight: bold;
+}
+.upload-button:hover {
+    background-color: #e55c00;
+}
+.flash-messages {
+    margin: 20px 0;
+    padding: 12px;
+    border-radius: 4px;
+    background-color: #fff0e6;
+    color: var(--dark-orange);
+    border: 1px solid var(--light-orange);
+}
+.instructions {
+    margin: 20px 0;
+    padding: 16px;
+    background-color: #fff8f2;
+    border-radius: 4px;
+    color: #333;
+    border: 1px solid var(--light-orange);
+}
+
+/* Card Styling */
+.card {
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    margin-bottom: 24px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.card h2 {
+    color: var(--dark-orange);
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--light-orange);
+    padding-bottom: 8px;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.editable-content {
+    width: 95%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.editable-content:focus {
+    outline: none;
+    border-color: var(--dark-orange);
+    box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.2);
+}
+
+.editable-content[readonly] {
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+}
+
+/* Fixed height prompts with scrolling */
+.fixed-height-prompt {
+    height: 150px; /* Approximately 10 sentences worth of height */
+    overflow-y: auto;
+    resize: none;
+}
+
+/* Non-editable content styling */
+.non-editable-content {
+    background-color: #f0f0f0;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+.readonly-text {
+    color: #555;
+    font-family: inherit;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Persona Styling */
+.personas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.add-persona-btn {
+    background-color: var(--dark-orange);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.add-persona-btn:hover {
+    background-color: #e55c00;
+}
+
+.personas-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.persona-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--panel-bg);
+    border-radius: 4px;
+    border: 1px solid var(--light-orange);
+}
+
+.persona-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.persona-action-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark-orange);
+}
+
+.persona-action-btn:hover {
+    color: #e55c00;
+}
+
+/* Settings Panel */
+.persona-settings-panel {
+    position: fixed;
+    top: 0;
+    right: -600px;
+    width: 600px;
+    height: 100vh;
+    background-color: var(--white);
+    box-shadow: -2px 0 10px var(--shadow-color);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.persona-settings-panel.open {
+    right: 0;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--dark-orange);
+    color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.panel-header h3 {
+    margin: 0;
+    color: var(--white);
+}
+
+.close-panel-btn {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.panel-content {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.settings-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background-color: var(--panel-bg);
+    border-radius: 8px;
+    border: 1px solid var(--light-orange);
+}
+
+.settings-section h4 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: var(--dark-orange);
+    border-bottom: 1px solid var(--light-orange);
+    padding-bottom: 8px;
+}
+
+/* File Input Styling */
+.file-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.file-input {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.file-input-label {
+    background-color: var(--dark-orange);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-block;
+    margin-right: 12px;
+}
+
+.file-input-label:hover {
+    background-color: #e55c00;
+}
+
+.selected-file-name {
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Expandable Content */
+.expandable-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.expand-icon, .collapse-icon {
+    margin-right: 8px;
+    font-size: 12px;
+}
+
+.hidden {
+    display: none;
+}
+
+.expandable-content {
+    margin-top: 8px;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+/* Agents Section */
+.agents-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.agent-item {
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.agent-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.agent-name {
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+.agent-details {
+    margin-top: 12px;
+    padding-left: 24px;
+}
+
+.agent-detail-item {
+    margin-bottom: 8px;
+}
+
+.agent-detail-item strong {
+    display: inline-block;
+    width: 100px;
+    font-weight: bold;
+}
+
+/* Save Button */
+.save-button {
+    background-color: var(--dark-orange);
+    color: var(--white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 16px;
+}
+
+.save-button:hover {
+    background-color: #e55c00;
+}
+
+/* Run Button */
+.run-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.run-button {
+    background-color: var(--dark-orange);
+    color: var(--white);
+    padding: 12px 40px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.run-button:hover {
+    background-color: #e55c00;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 102, 0, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--dark-orange);
+    animation: spin 1s ease-in-out infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
