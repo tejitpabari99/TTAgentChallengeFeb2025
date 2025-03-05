@@ -18,12 +18,27 @@ interface AnalysisResults {
     ppt_content: Record<string, any>;
   };
   personas: Array<{
+    id: string | null;
     name: string;
+    description: string;
+    persona_prompt: string;
+    persona_gpt_prompt: string;
+    population_size: number;
+    agents: Array<{
+      agent_id: string;
+      agent_name: string;
+      agent_description: string;
+      agent_file: string;
+    }>;
     analysis: {
+      analysis_prompt: string;
+      analysis_gpt_prompt: string;
       extracted_result: Record<string, any>;
       combined_result: string;
     };
     qna: {
+      qna_prompt: string;
+      qna_gpt_prompt: string;
       extracted_result: Record<string, any>;
       combined_result: string;
     };
@@ -60,11 +75,13 @@ export default function Home() {
       return;
     }
 
+    // Close the settings panel before running analysis
+    closePersonaSettings();
     setIsAnalyzing(true);
 
     try {
       // Check if all personas have results before making API call
-      const hasAllResults = Object.values(personaSettings).every(persona => 
+      const hasAllResults = Object.values(personaSettings).every(persona =>
         (persona.analysis?.extracted_result && Object.keys(persona.analysis.extracted_result).length > 0 && persona.analysis?.combined_result) &&
         (persona.qna?.extracted_result && Object.keys(persona.qna.extracted_result).length > 0 && persona.qna?.combined_result)
       );
@@ -117,38 +134,54 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      <h1 style={{textAlign: "center"}}>PowerPoint Content Extractor</h1>
-      
+      <main className={styles.innerMain}>
+      <h1 style={{ textAlign: "center" }}>PowerPoint Content Extractor</h1>
+
       <div className={styles.instructions}>
-        <h3>Instructions</h3>
-        <ul>
-          <li>Select either
-            <ul>
-              <li>A PowerPoint file (.pptx) to extract content</li>
-              <li>A JSON config file (.json) to load existing configuration</li>
-            </ul>
-          </li>
-          <li>Click "Upload" to process the file</li>
-          <li>For PowerPoint files, the tool will extract text and notes</li>
-          <li>For JSON files, the tool will populate all form fields with the saved configuration</li>
-          <li>Maximum file size: 16MB</li>
-        </ul>
+        <div className={styles.instructionsHeader}>
+          <h3>Instructions</h3>
+          <button
+            className={styles.collapseButton}
+            onClick={() => {
+              const content = document.querySelector(`.${styles.instructionsContent}`);
+              if (content) {
+                content.classList.toggle(styles.collapsed);
+              }
+            }}
+          >
+            <i className="fas fa-chevron-up"></i>
+          </button>
+        </div>
+        <div className={styles.instructionsContent}>
+          <ul>
+            <li>Select either
+              <ul>
+                <li>A PowerPoint file (.pptx) to extract content</li>
+                <li>A JSON config file (.json) to load existing configuration</li>
+              </ul>
+            </li>
+            <li>Click "Upload" to process the file</li>
+            <li>For PowerPoint files, the tool will extract text and notes</li>
+            <li>For JSON files, the tool will populate all form fields with the saved configuration</li>
+            <li>Maximum file size: 16MB</li>
+          </ul>
+        </div>
       </div>
 
       <div className={styles.card}>
         <h2>Upload File</h2>
         <form onSubmit={(e) => e.preventDefault()}>
-          <div 
+          <div
             className={styles.uploadArea}
             onClick={() => document.getElementById('fileInput')?.click()}
           >
             <label className={styles.uploadLabel}>
               Click or drag file here to upload
             </label>
-            <input 
+            <input
               id="fileInput"
-              type="file" 
-              accept=".pptx,.json" 
+              type="file"
+              accept=".pptx,.json"
               onChange={(e) => handleFileChange(e, setPresentationInfo, setPersonaSettings)}
               className={styles.fileInput}
             />
@@ -240,15 +273,15 @@ export default function Home() {
         </div>
       </div>
 
-      <button
-        onClick={handleRunAnalysis}
-        className={styles.runButton}
-        disabled={isAnalyzing}
-      >
-        {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
-      </button>
-
-      {results && <Results results={results} />}
+      <div className={styles.buttonContainer}>
+        <button
+          onClick={handleRunAnalysis}
+          className={styles.runButton}
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
+        </button>
+      </div>
 
       <PersonaSettingsComponent
         isOpen={activePersonaIndex !== null}
@@ -257,6 +290,8 @@ export default function Home() {
         onClose={closePersonaSettings}
         onUpdatePrompts={updatePersonaPrompts}
       />
+    </main>
+    {results && <Results results={results} />}
     </main>
   );
 }

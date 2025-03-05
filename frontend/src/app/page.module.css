@@ -1,16 +1,64 @@
 .main {
-  max-width: 800px;
-  margin: 0 auto 0 2%;
+  margin: 0 auto 0 1%;
   padding: 20px;
+}
+
+.innerMain {
+  max-width: 750px;
 }
 
 .instructions {
   background-color: var(--panel-bg);
   border-radius: 8px;
-  padding: 20px;
+  padding: 0;
   margin-bottom: 20px;
   border: 1px solid var(--light-orange);
   color: #333;
+}
+
+.instructionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: var(--dark-orange);
+  color: var(--white);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.instructionsHeader h3 {
+  margin: 0;
+  color: var(--white);
+}
+
+.collapseButton {
+  background: none;
+  border: none;
+  color: var(--white);
+  cursor: pointer;
+  padding: 5px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.collapseButton:hover {
+  opacity: 0.8;
+}
+
+.instructionsContent {
+  padding: 20px;
+  transition: max-height 0.3s ease-out;
+  overflow: hidden;
+  max-height: 500px;
+}
+
+.instructionsContent.collapsed {
+  max-height: 0;
+  padding: 0 20px;
 }
 
 .instructions ul {
@@ -176,6 +224,13 @@
   background: #e55c00;
 }
 
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
 .runButton {
   background: var(--dark-orange);
   color: var(--white);
@@ -186,7 +241,7 @@
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s;
-  width: 100%;
+  width: 20%;
   margin-top: 20px;
 }
 

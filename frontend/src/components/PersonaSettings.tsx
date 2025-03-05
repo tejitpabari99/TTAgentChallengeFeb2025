@@ -41,20 +41,7 @@ export function PersonaSettings({
 
       <div className={styles.panelContent}>
         <div className={styles.settingsSection}>
-          <h3>General Settings</h3>
-          <div className={styles.formGroup}>
-            <label htmlFor="populationSize">Population Size</label>
-            <input
-              type="number"
-              id="populationSize"
-              name="populationSize"
-              value={persona.population_size}
-              min="1"
-              onChange={(e) => personaIndex && onUpdatePrompts(personaIndex, 'persona_prompt', e.target.value)}
-              className={styles.input}
-            />
-          </div>
-
+          <h3>Persona Settings</h3>
           <div className={styles.formGroup}>
             <label htmlFor="personaGptPrompt">Persona GPT Prompt</label>
             <textarea
@@ -82,6 +69,18 @@ export function PersonaSettings({
 
         <div className={styles.settingsSection}>
           <h3>Agents</h3>
+          <div className={styles.formGroup}>
+            <label htmlFor="populationSize">Population Size</label>
+            <input
+              type="number"
+              id="populationSize"
+              name="populationSize"
+              value={persona.population_size}
+              min="1"
+              onChange={(e) => personaIndex && onUpdatePrompts(personaIndex, 'persona_prompt', e.target.value)}
+              className={styles.input}
+            />
+          </div>
           <div className={styles.agentsContainer}>
             {persona.agents.length > 0 ? (
               persona.agents.map((agent: any, index: number) => (
