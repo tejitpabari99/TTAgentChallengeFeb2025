@@ -1,155 +1,240 @@
-import os, json
+import os, json, logging
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Union, Dict, List, Optional, Any
 from uuid import uuid4
 from tinytroupe.factory import TinyPersonFactory
+from tinytroupe.environment import TinyWorld
 from tinytroupe.extraction import ResultsExtractor
-from tinytroupe.agent import TinyPerson
+
+from backend.utils.PersonaAction import PersonaAnalysis, PersonaQNA
+from backend.utils.PPT import PPT
+from backend.utils.Agent import Agent
+from backend.utils.GPT import GPT
+from backend.utils import Constants
+from backend.utils.utils import _ensure_keys_exist, _get_prompt
 
 default_criteria = "Return an array of json objects."
 default_population_size = 5
 
+logger = logging.getLogger(__name__)
+
+@dataclass
 class Persona:
-    def __init__(self, persona_type=None, persona_description=None, persona_id=None, population_size = default_population_size, persona_folder=None):
-        if persona_folder:
-            self.load_persona(persona_folder)
-            return
-        elif persona_type and persona_description:
-            self.persona_spec = {
-                'persona_type': persona_type,
-                'persona_description': persona_description,
-                'persona_id': persona_id or str(uuid4()),
-                'population_size': population_size,
-                'population_folder': None,
-                'prompts': {}
-            }
-            self.factory: TinyPersonFactory = None
-            self.population:list[TinyPerson] = []
-            print(f"Persona created with id: {self.persona_spec['persona_id']} type: {self.persona_spec['persona_type']}, description: {self.persona_spec['persona_description']}")
-        else:
-            raise ValueError("Persona type and description or persona spec file must be provided to create a persona.")
+    name: str
+    description: str
+    id: Optional[str] = None
+    prompt: Optional[str] = None
+    gpt_prompt: Optional[str] = None
+    population_size: Optional[int] = default_population_size
+    agents: Optional[List[Agent]] = None
+    analysis: Optional[PersonaAnalysis] = None
+    qna: Optional[PersonaQNA] = None
+    ppt: Optional[PPT] = None
+    mapping: Optional[Dict[str, str]] = None
+    mappingDict: Optional[Any] = None
 
-    def load_persona(self, persona_folder):
-        persona_spec_file = f"{persona_folder}/persona_spec.json"
-        if not os.path.exists(persona_spec_file):
-            raise ValueError("Persona spec file not found in persona folder.")
-        self.load_specifications(persona_spec_file)
-        self.load_population()
-        if not self.persona_spec.get('persona_type', None):
-            raise ValueError("Persona type not found in persona spec.")
-        if not self.persona_spec.get('persona_description', None):
-            raise ValueError("Persona description not found in persona spec.")
-        if not self.persona_spec.get('persona_id', None):
-            raise ValueError("Persona id not found in persona spec.")
-        print(f"Persona loaded with id: {self.persona_spec['persona_id']} type: {self.persona_spec['type']}, description: {self.persona_spec['description']}")
 
-    def save_persona(self, persona_folder=None):
-        if not persona_folder: persona_folder = f"persona_{self.persona_spec['persona_type'].replace(' ', '_')}_{self.persona_spec['persona_id']}"
+    def __init__(self, name: str, description: str, id: Optional[str]=None, 
+                 prompt: Optional[str] = '', gpt_prompt: Optional[str] = '',
+                 population_size: int = default_population_size, agents: Optional[List[Agent]] = [],
+                 analysis: Optional[PersonaAnalysis] = None, qna: Optional[PersonaQNA] = None,
+                 ppt: Optional[PPT] = None) -> None:
+        self.id = id or str(uuid4())
+        self.name = name
+        self.description = description
+        self.prompt = prompt
+        self.gpt_prompt = gpt_prompt
+        self.population_size = population_size
+        self.agents = agents
+        self.analysis = analysis
+        self.qna = qna
+        self.ppt = ppt
+        self.gpt = GPT(f"GPT Assistant {self.name}", Constants.Prompts.TINY_TROUPE_INFO)
+        self._set_mapping()
+        self.mappingDict = defaultdict(lambda: "MISSING", self.mapping)
+        self.tinyWorld = None
+        self.tinyFactory = None
+
+    @classmethod
+    def load(cls, persona_dict: Dict[str, Any], root_folder: str = None) -> 'Persona':
+        _ensure_keys_exist(persona_dict, ['name', 'description'], 
+                               "Personas must have name and description.")
+        logger.info(f"Loading Persona {persona_dict.get('name')}...")
+        return cls(
+            id=persona_dict.get('id', None),
+            name=persona_dict.get('name', ''),
+            description=persona_dict.get('description', ''),
+            prompt=persona_dict.get('prompt', ''),
+            gpt_prompt=persona_dict.get('gpt_prompt', ''),
+            population_size=persona_dict.get('population_size', default_population_size),
+            agents=[Agent.load(s, root_folder=root_folder) for s in persona_dict.get('agents', [])],
+            analysis=PersonaAnalysis.load(persona_dict.get('analysis', {})),
+            qna=PersonaQNA.load(persona_dict.get('qna', {}))
+        )
+        
+    def save(self, folder:str):
+        logger.info(f"Saving Persona {self.name} to {folder}...")
+        if not os.path.exists(folder): raise ValueError(f"Folder {folder} not found.")
+        
+        persona_folder = f"{folder}/{self.name.replace(' ', '_')}"
         if not os.path.exists(persona_folder): os.makedirs(persona_folder)
-
-        persona_spec_file = f"{persona_folder}/persona_spec.json"
-        self.save_specificatons(persona_spec_file)
-        self.save_population(self.persona_spec.get('population_folder', f"{persona_folder}/population"))
         
-        return persona_folder
-
-    def load_specifications(self, persona_spec_file):
-        self.persona_spec = json.load(open(persona_spec_file, "r", encoding='utf-8'))
-        return self.persona_spec
-
-    def save_specificatons(self, persona_spec_file):
-        json.dump(self.persona_spec, open(persona_spec_file, "w", encoding='utf-8'), indent=4)
-
-    def get_specification(self):
-        return self.persona_spec
-
-    def load_population(self, population_folder=None):
-        population_folder = self._get_folder('population_folder', population_folder)
-        self.persona_spec['population_folder'] = population_folder
-
-        self.population = []
-        for file in os.listdir(population_folder):
-            if file.endswith(".json"):
-                self.population.append(TinyPerson.load_specification(f"{population_folder}/{file}"))
-        return self.population
-    
-    def save_population(self, population_folder=None, include_memory=False):
-        population_folder = self._get_folder('population_folder', population_folder)
-        for pop in self.population:
-            name = pop.get('name')
-            pop.save_specification(f"{population_folder}/{name.strip().replace(' ', '_')}.json", include_memory=include_memory)
-
-    def _get_folder(self, folder_name, folder=None):
-        if not folder: folder = self.persona_spec.get(folder_name, None)
-        if not folder: 
-            raise ValueError(f"{folder_name} not provided or found in persona_spec.")
-        if not os.path.exists(folder):
-            raise ValueError(f"{folder_name} folder not found.")
-        return folder
-
-    def load_prompts(self, prompts_dict=None):
-        """Load prompts from a dictionary or use empty prompts if not provided"""
-        if not prompts_dict:
-            prompts_dict = {}
+        agent_folder = f"{persona_folder}/agents"
+        if not os.path.exists(agent_folder): os.makedirs(agent_folder)
+        logger.debug(f"Saving Persona Agents to {agent_folder}...")
         
-        self.persona_spec['prompts'] = {
-            'persona_prompt': prompts_dict.get('persona_prompt', ''),
-            'persona_gpt_prompt': prompts_dict.get('persona_gpt_prompt', ''),
-            'analysis_prompt': prompts_dict.get('analysis_prompt', ''),
-            'analysis_gpt_prompt': prompts_dict.get('analysis_gpt_prompt', ''),
-            'analysis_criteria': prompts_dict.get('analysis_criteria', default_criteria),
-            'qna_prompt': prompts_dict.get('qna_prompt', ''),
-            'qna_gpt_prompt': prompts_dict.get('qna_gpt_prompt', ''),
-            'qna_criteria': prompts_dict.get('qna_criteria', default_criteria)
+        for agent in self.agents:
+            agent.save(f"{agent_folder}/{agent.name.replace(' ', '_')}.json")
+        return self.to_dict()
+
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'prompt': self.prompt,
+            'gpt_prompt': self.gpt_prompt,
+            'population_size': self.population_size,
+            'agents': [s.to_dict() for s in self.agents],
+            'analysis': self.analysis.to_dict(),
+            'qna': self.qna.to_dict()
         }
 
-    def update_prompts(self, prompts_dict):
-        """Update specific prompts in the persona spec"""
-        if not self.persona_spec.get('prompts'):
-            self.persona_spec['prompts'] = {}
+    def add_prompt(self, prompt: str) -> None: self.prompt = prompt
+    def remove_prompt(self): self.prompt = ''
+    def add_gpt_prompt(self, gpt_prompt: str) -> None: self.gpt_prompt = gpt_prompt
+    def remove_gpt_prompt(self): self.gpt_prompt = ''
+    def reset_prompts(self):
+        self.remove_prompt()
+        self.remove_gpt_prompt()
+
+    def set_population_size(self, population_size: int) -> None: self.population_size = population_size
+    def add_ppt(self, ppt: PPT) -> None:
+        self.ppt = ppt
+        self.analysis.add_ppt(ppt)
+        self.qna.add_ppt(ppt)
+    def add_agents(self, agents: List[Agent]) -> None: 
+        self.agents.extend(agents)
+    def add_agent(self, agent: Agent) -> None: 
+        return self.add_agents([agent])
+    def remove_agents(self): self.agents = []
+    def reset_agents(self): self.agents = []
+
+    def create_tiny_world(self): return TinyWorld(f"TinyWorld {self.name}", 
+                                                  [agent.tinyPerson for agent in self.agents], 
+                                                  broadcast_if_no_target=False)
+
+    def reset(self):
+        self.reset_prompts()
+        self.reset_agents()
+        self.analysis.reset()
+        self.qna.reset()
+        self.update_mapping()
+
+    def _set_mapping(self) -> None:
+        self.mapping = {
+            f'persona_name': self.name,
+            f'persona_description': self.description,
+            f'persona_prompt': self.prompt,
+            f'persona_gpt_prompt': self.gpt_prompt,
+            f'persona_population_size': str(self.population_size),
+        }
+        if self.analysis: self.mapping.update(self.analysis.update_mapping())
+        if self.qna: self.mapping.update(self.qna.update_mapping())
+        if self.ppt: self.mapping.update(self.ppt.update_mapping())
+        self.mappingDict = defaultdict(lambda: "MISSING", self.mapping)
+
+    def update_mapping(self) -> Dict[str, str]:
+        self._set_mapping()
+        return self.mappingDict
+
+    def run(self, use_existing_agents:bool=True):
+        self.id = str(uuid4())
+        logger.info(f"Running Persona {self.name}...")
         
-        for key, value in prompts_dict.items():
-            if key in ['persona_prompt', 'persona_gpt_prompt', 
-                      'analysis_prompt', 'analysis_gpt_prompt', 'analysis_criteria',
-                      'qna_prompt', 'qna_gpt_prompt', 'qna_criteria']:
-                self.persona_spec['prompts'][key] = value
+        # Check if PPT is provided
+        if not self.ppt: raise ValueError("PPT must be provided to persona.")
+        additional_prompts = [self.ppt.ppt_and_slide_prompt()]
+        
+        self.update_mapping() # Update mapping of variables to substitute in prompts
 
-    def change_population_size(self, population_size):
-        self.persona_spec['population_size'] = population_size
+        if self.agents and use_existing_agents:
+            logger.debug("Using existing agents...")
+            # Agents should already be added to the tiny world
+        else:
+            # Update prompt and gpt_prompt with the mapping values and get a persona prompt to use
+            if self.prompt: self.add_prompt(self.prompt.format_map(self.mappingDict))
+            if not self.gpt_prompt: self.gpt_prompt = Constants.Prompts.TINY_TROUPE_PERSONA_GPT_PROMPT.format_map(self.mappingDict)
+            if self.gpt_prompt: self.add_gpt_prompt(self.gpt_prompt.format_map(self.mappingDict))
+            self.prompt = _get_prompt(gpt = self.gpt, gpt_prompt = self.gpt_prompt, prompt = self.prompt,
+                                        additional_prompts=additional_prompts)
+            logger.debug(f"Generating {self.population_size} new agents with prompt {self.prompt}")
+            
+            # Generate agents with persona prompt
+            tinyPersonFac = TinyPersonFactory(self.prompt)
+            self.agents = [Agent.create(t) for t in tinyPersonFac.generate_people(self.population_size)]
+        
+        # After agents have been created, create tiny world with agents.
+        self.tinyWorld = self.create_tiny_world()
 
-    def create_factory(self):
-        persona_prompt = self.persona_spec.get('persona_prompt', None)
-        if not persona_prompt:
-            raise ValueError("Persona prompt not found in persona spec.")
-        return TinyPersonFactory(persona_prompt)
+        # Analyze and summarize
+        logger.debug("Analyzing and summarizing...")
+        self.update_mapping() # Update mapping of variables to substitute in prompts
+        self.analysis.run(tinyWorld = self.tinyWorld, updateDict=self.mappingDict)
+        
+        # Ask questions and summarize
+        logger.debug("Asking questions and summarizing...")
+        self.update_mapping() # Update mapping of variables to substitute in prompts
+        self.qna.run(tinyWorld = self.tinyWorld, updateDict=self.mappingDict)
 
-    def create_population(self, force=False):
-        if not force and self.population:
-            raise ValueError("Population already exists. Use force=True to recreate population.")
-        if not self.factory:
-            self.factory = self.create_factory()
-        population_size = self.persona_spec.get('population_size', default_population_size)
-        self.population = self.factory.generate_people(population_size)
-        return self.population
+    def to_html(self) -> str:
+        html = f"""
+        <div class="persona">
+            <details>
+                <summary>{self.name.capitalize()}</summary>
+                
+                <div class="persona-prompts">
+                    <details>
+                        <summary>Persona Prompts</summary>
+                        <details>
+                            <summary>GPT Prompt</summary>
+                            <div class="prompt-content scrollable-content">
+                                <pre>{self.gpt_prompt or 'Not provided'}</pre>
+                            </div>
+                            
+                        </details>
+                        <details>
+                            <summary>Prompt</summary>
+                            <div class="prompt-content scrollable-content">
+                                <pre>{self.prompt or 'Not provided'}</pre>
+                            </div>
+                        </details>
+                    </details>
+                </div>
 
-    def analysis_result_extractor(self, extraction_objective=None, situation=None, fields=None, fields_hints=None, verbose=False):
-        if not extraction_objective:
-            extraction_objective = self.persona_spec['prompts'].get('analysis_criteria', default_criteria)
-        if not situation:
-            situation = "The agent was tasked with analyzing a powerpoint presentation to provide feedback on the content of the presentation and the presentation itself."
-        if not fields:
-            fields = ['analysis']
-        if not field_hints:
-            field_hints = {'analysis': self.persona_spec['prompts'].get('analysis_criteria', default_criteria)}
-        return ResultsExtractor(extraction_objective=extraction_objective, situation=situation, 
-                                fields=fields, field_hints=field_hints, verbose=verbose)
-    
-    def qna_result_extractor(self, extraction_objective=None, situation=None, fields=None, fields_hints=None, verbose=False):
-        if not extraction_objective:
-            extraction_objective = self.persona_spec['prompts'].get('qna_criteria', default_criteria)
-        if not situation:
-            situation = "The agent was tasked with asking questions after analyzing powerpoint presentation, about the content of the presentation and the presentation itself."
-        if not fields:
-            fields = ['qna']
-        if not field_hints:
-            field_hints = {'qna': self.persona_spec['prompts'].get('qna_criteria', default_criteria)}
-        return ResultsExtractor(extraction_objective=extraction_objective, situation=situation, 
-                                fields=fields, field_hints=field_hints, verbose=verbose)
+                <div class="agents">
+                    <details>
+                        <summary>Agents (Population size: {self.population_size})</summary>
+                        {''.join([agent.to_html() for agent in self.agents]) if self.agents else 'No agents'}
+                    </details>
+                </div>
+
+                <div class="analysis">
+                    <details>
+                        <summary>Analysis</summary>
+                        {self.analysis.to_html() if self.analysis else 'No analysis'}
+                    </details>
+                </div>
+
+                <div class="qna">
+                    <details>
+                        <summary>QNA</summary>
+                        {self.qna.to_html() if self.qna else 'No QNA'}
+                    </details>
+                </div>
+            </details>
+        </div>
+        """
+        return html
