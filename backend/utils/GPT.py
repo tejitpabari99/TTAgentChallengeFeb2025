@@ -14,6 +14,7 @@ class GPT:
         self.default_prompt = default_prompt
         # Create assistant immediately during initialization
         self.assistant = self.create_assistant()
+        self.thread_id = None # Storing thread ID for continuation. It is only used by default in continue_conversation
 
     def setup(self):
         logger.debug("Setting up Azure OpenAI client...")
@@ -76,11 +77,15 @@ class GPT:
         
         # Return the latest assistant message and thread ID for continuation
         latest_message = messages.data[0]
+        self.thread_id = thread.id # Storing the thread ID for continuation
         return {
             'response': latest_message.content[0].text.value,
             'thread_id': thread.id
         }
 
-    def continue_conversation(self, user_prompt: str, thread_id: str) -> dict:
+    def continue_conversation(self, user_prompt: str, thread_id: str=None) -> dict:
         """Continue an existing conversation thread"""
+        # If no thread is provided, it uses stored thread ID
+        if not thread_id: thread_id = self.thread_id
+        logger.debug(f"Continuing conversation with thread ID: {thread_id}")
         return self.run_conversation(user_prompt, thread_id)

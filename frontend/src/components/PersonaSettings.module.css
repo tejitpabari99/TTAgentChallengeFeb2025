@@ -1,22 +1,11 @@
 .personaSettingsPanel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 700px;
-  height: 100vh;
   background: var(--white);
-  box-shadow: -2px 0 10px var(--shadow-color);
-  z-index: 1000;
-  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow-color);
   padding: 0;
   display: flex;
   flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-}
-
-.personaSettingsPanel.open {
-  transform: translateX(0);
+  height: 100%;
 }
 
 .panelHeader {
@@ -56,6 +45,7 @@
   padding: 16px;
   flex: 1;
   overflow-y: auto;
+  max-height: 100%;
 }
 
 .panelContent h3 {

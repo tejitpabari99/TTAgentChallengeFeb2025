@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any, Union
 import json, os, logging
-from tinytroupe.environment import TinyWorld
 from backend.utils.Persona import Persona
 from backend.utils.PPT import PPT
 from uuid import uuid4
@@ -84,11 +83,26 @@ class Pulse:
         with open(file, 'w', encoding='utf-8') as f:
             f.write(self.to_html())
 
-    def run(self):
+    def run(self, parallel: bool = False):
+        """
+        Run all personas in the Pulse.
+        Args:
+            parallel (bool): If True, run personas in parallel using ThreadPoolExecutor.
+                           Only GPT personas will be run in parallel. Default is False.
+        """
         self.id = str(uuid4())
         logger.info(f"Running Pulse {self.id}...")
-        for persona in self.personas:
-            persona.run()
+
+        if parallel:
+            from concurrent.futures import ThreadPoolExecutor
+            logger.debug(f"Running {len(self.personas)} GPT personas in parallel...")
+            with ThreadPoolExecutor() as executor:
+                list(executor.map(lambda p: p.run(), self.personas))
+        else:
+            # Run all personas sequentially
+            for persona in self.personas:
+                logger.debug(f"Running {persona.type.value} persona {persona.name}...")
+                persona.run()
     
     def reset(self):
         logger.info(f"Resetting Pulse {self.id}...")
@@ -104,13 +118,13 @@ class Pulse:
                         <details>
                             <summary>Analysis Results</summary>
                             <div class="combined-results">
-                                {markdown2.markdown(persona.analysis.combined_result) if persona.analysis and persona.analysis.combined_result else 'No analysis results'}
+                                {persona.analysis.results_to_html() if persona.analysis else 'No analysis results'}
                             </div>
                         </details>
                         <details>
                             <summary>QNA Results</summary>
                             <div class="combined-results">
-                                {markdown2.markdown(persona.qna.combined_result) if persona.qna and persona.qna.combined_result else 'No QNA results'}
+                                {persona.qna.results_to_html() if persona.qna else 'No QNA results'}
                             </div>
                         </details>
                     </details>"""

@@ -134,8 +134,9 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
+      <h1 className={styles.pageTitle}>PowerPoint Content Extractor</h1>
       <main className={styles.innerMain}>
-      <h1 style={{ textAlign: "center" }}>PowerPoint Content Extractor</h1>
+        <div className={styles.leftPanel}>
 
       <div className={styles.instructions}>
         <div className={styles.instructionsHeader}>
@@ -273,7 +274,24 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={styles.buttonContainer}>
+        </div>
+        <div className={styles.rightPanel}>
+          {activePersonaIndex === null ? (
+            <div className={styles.emptyRightPanel}>
+              Click on a persona setting to configure a persona
+            </div>
+          ) : (
+            <PersonaSettingsComponent
+              isOpen={true}
+              personaIndex={activePersonaIndex}
+              personaSettings={personaSettings}
+              onClose={closePersonaSettings}
+              onUpdatePrompts={updatePersonaPrompts}
+            />
+          )}
+        </div>
+      </main>
+      <div className={styles.centerContent}>
         <button
           onClick={handleRunAnalysis}
           className={styles.runButton}
@@ -282,16 +300,7 @@ export default function Home() {
           {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
         </button>
       </div>
-
-      <PersonaSettingsComponent
-        isOpen={activePersonaIndex !== null}
-        personaIndex={activePersonaIndex}
-        personaSettings={personaSettings}
-        onClose={closePersonaSettings}
-        onUpdatePrompts={updatePersonaPrompts}
-      />
-    </main>
-    {results && <Results results={results} />}
+      {results && <Results results={results} />}
     </main>
   );
 }

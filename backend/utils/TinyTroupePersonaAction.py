@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 default_objective = "Return an array of json objects, 1 array entry per agent."
 
 @dataclass
-class PersonaAction:
+class TinyTroupePersonaAction:
     type: str
     type_intent: str
     gpt_prompt: Optional[str] = None
@@ -31,7 +31,7 @@ class PersonaAction:
                  gpt_prompt: Optional[str] = '', prompt: Optional[str] = '', 
                  summarization_gpt_prompt: Optional[str] = '', 
                  result: Optional[Any] = None, combined_result: Optional[str] = None,
-                 ppt: Optional[PPT] = None) -> None:
+                 ppt: Optional[PPT] = None, gpt: GPT=None) -> None:
         self.type = type
         self.type_intent = type_intent
         self.gpt_prompt = gpt_prompt
@@ -40,12 +40,12 @@ class PersonaAction:
         self.result = result
         self.combined_result = combined_result
         self.ppt = ppt
-        self.gpt = GPT(f"GPT Assistant {self.type}", Constants.Prompts.TINY_TROUPE_INFO)
+        self.gpt = gpt or GPT(f"TINYTROUPE GPT Assistant {self.type}", Constants.Prompts.TINY_TROUPE_INFO)
         self._set_mapping()
 
     @classmethod
-    def load(cls, type:str, type_intent: str, action_dict: Dict[str, Any]) -> 'PersonaAction':
-        logger.info(f"Loading PersonaAction {type}...")
+    def load(cls, type:str, type_intent: str, action_dict: Dict[str, Any]) -> 'TinyTroupePersonaAction':
+        logger.info(f"Loading TinyTroupePersonaAction {type}...")
         return cls(
             type=type,
             type_intent=type_intent,
@@ -95,7 +95,7 @@ class PersonaAction:
     def run(self, tinyWorld:TinyWorld, updateDict:defaultdict) -> None:
         if not self.ppt:
             raise ValueError("No PPT provided to run the action.")
-        logger.info(f"Running PersonaAction {self.type}...")
+        logger.info(f"Running TinyTroupePersonaAction {self.type}...")
 
         # Update prompt and gpt_prompt with the mapping values and get a persona prompt to use
         if self.prompt: self.add_prompt(self.prompt.format_map(updateDict))
@@ -104,7 +104,7 @@ class PersonaAction:
         updateDict.update(self.update_mapping())
 
         self.prompt = _get_prompt(gpt = self.gpt, gpt_prompt = self.gpt_prompt, prompt = self.prompt)
-        logger.debug(f"Running PersonaAction {self.type} with prompt {self.prompt}")
+        logger.debug(f"Running TinyTroupePersonaAction {self.type} with prompt {self.prompt}")
         
         # Broadcast the prompt to the agents and run the tiny world
         logger.debug(f"Broadcasting prompt to agents and running tiny world...")
@@ -130,6 +130,10 @@ class PersonaAction:
         
         self.combined_result = self.gpt.run_conversation(self.ppt.ppt_prompt() + self.summarization_gpt_prompt)['response']
         
+    def results_to_html(self) -> str:
+        import markdown2
+        return markdown2.markdown(self.combined_result) if self.combined_result else 'No combined results'
+
     def to_html(self) -> str:
         import markdown2
         html = f"""
@@ -166,7 +170,7 @@ class PersonaAction:
                 <details>
                     <summary>Combined Results</summary>
                     <div class="combined-results">
-                        {markdown2.markdown(self.combined_result) if self.combined_result else 'No combined results'}
+                        {self.results_to_html()}
                     </div>
                 </details>
             </details>
@@ -175,7 +179,7 @@ class PersonaAction:
         return html
 
 @dataclass
-class PersonaAnalysis(PersonaAction):
+class TinyTroupePersonaAnalysis(TinyTroupePersonaAction):
     def __init__(self, 
                  gpt_prompt: Optional[str] = Constants.Prompts.TINY_TROUPE_ANALYSIS_GPT_PROMPT, prompt: Optional[str] = None, 
                  summarization_gpt_prompt: Optional[str] = Constants.Prompts.TINY_TROUPE_ANALYSIS_SUMMARIZATION_GPT_PROMPT, 
@@ -184,7 +188,7 @@ class PersonaAnalysis(PersonaAction):
                          gpt_prompt, prompt, summarization_gpt_prompt, result, combined_result)
 
     @classmethod
-    def load(cls, action_dict: Dict[str, Any]) -> 'PersonaAnalysis':
+    def load(cls, action_dict: Dict[str, Any]) -> 'TinyTroupePersonaAnalysis':
         return cls(
             gpt_prompt=action_dict.get(f'gpt_prompt', Constants.Prompts.TINY_TROUPE_ANALYSIS_GPT_PROMPT),
             prompt=action_dict.get(f'prompt', None),
@@ -199,7 +203,7 @@ class PersonaAnalysis(PersonaAction):
         self.summarization_gpt_prompt = Constants.Prompts.TINY_TROUPE_ANALYSIS_SUMMARIZATION_GPT_PROMPT
 
 @dataclass
-class PersonaQNA(PersonaAction):
+class TinyTroupePersonaQNA(TinyTroupePersonaAction):
     def __init__(self, 
                  gpt_prompt: Optional[str] = Constants.Prompts.TINY_TROUPE_QNA_GPT_PROMPT, prompt: Optional[str] = None, 
                  summarization_gpt_prompt: Optional[str] = Constants.Prompts.TINY_TROUPE_QNA_SUMMARIZATION_GPT_PROMPT, 
@@ -208,7 +212,7 @@ class PersonaQNA(PersonaAction):
                          gpt_prompt, prompt, summarization_gpt_prompt, result, combined_result)
 
     @classmethod
-    def load(cls, action_dict: Dict[str, Any]) -> 'PersonaQNA':
+    def load(cls, action_dict: Dict[str, Any]) -> 'TinyTroupePersonaQNA':
         return cls(
             gpt_prompt=action_dict.get(f'gpt_prompt', Constants.Prompts.TINY_TROUPE_QNA_GPT_PROMPT),
             prompt=action_dict.get(f'prompt', None),

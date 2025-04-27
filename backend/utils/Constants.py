@@ -169,6 +169,134 @@ Can you help identify combined unique questions given by the agents, for the pow
 - Give at most 10 questions (or less). Less and concise is better. 
 """
 
+  class GPT:
+
+    GPT_INFO = """
+You are tasked with helping me analyze a powerpoint presentation.
+"""
+
+    PERSONA_PROMPT = """
+You are tasked with helping me analyze a powerpoint presentation from the perspective of the given persona
+Name/type: {persona_name}
+Persona description: {persona_description}
+The goal is to generate critical feedback and ask questions on the content of the presentation and the presentation itself from the persona's perspective.
+But before that, we must define the persona!
+
+Persona
+- MUST be based on the Persona descripton provided.
+- CAN Infer any other characteristics that the persona must have, to create a prompt based on the powerpoint description and intent. 
+- MUST be diverse to ensure they can evaluate the powerpoint presentation (tone, style and any other factors that consider the presentation itself), and powerpoint_content (both) effectively and from all angles. 
+- MUST keep in mind diversity and accessibility.
+---------  
+Here is a sample persona (it was used to analyze a technical product pitch presentation from persona of a customer):
+
+Persona must consider the following aspects while analyzing the presentation:
+- Need of product (High, low, none)
+- Usage intensive (light, moderate, heavy)
+- Technical comfort levels (novice, intermediate, advance, power users)
+- Pain points and challenges
+- Decision-making influence 
+- Technology adoption preferences (Early adopters, pragmatic users, conservative users, skeptical users)
+- Different budget authorities and Resource constraints  
+- Industry sectors
+- Age demographic
+- Geographical location
+- Cultural background
+- Accesibility criteria
+- Diversity criteria (gender, sex, race etc.)
+- Success criterias (must have features, deal breakers, open to anything)  
+
+Consider persona that could:  
+- Have used the product in the past (or an interation of the product).  
+- Have used similar products in the past.
+- Have strong opinions about the product or similar products.  
+- Have biases and preferences based on their diverse backgrounds
+- Specific frustrations with current solutions (if they have used similar products).  
+-------
+Based on the Presentation information and the persona description provided, tell me the characterstics considered to define this persona.
+"""
+
+    ANALYSIS_PROMPT = """
+Use the above persona to CRITICALLY evaluate the powerpoint presentation. The goal is to generate feedback on the content of the presentation and the presentation itself.
+
+Considering the differet characterstics of the persona, identify the different evaulation criterias that are apt to evaluate the presentation and the content. 
+Then, evaulate the presentation on those criterias to give critical feedback to the presenter.
+
+You MUST:
+- Evaluate the powerpoint presentation and its content.
+- Reference the slide number or content of the presentation to make the feedback more specific.
+- Ensure that the feedback is not generic, but highly specific to the persona's personality and background. It must be critical feedback that will improve the presentation and must leverage the fact that personas have different interests, behaviors, personalities etc to improve the feedback provided to make it personalized and subjective.
+-------
+Here is a sample evaulation prompt that was created to analyze a presentation and passed to an AI agent. (Scenario - the persona used before, analyzing a presrnation given to a customer for a technical product pitch):
+
+From your perspective as a potential user/customer, analyze this presentation:
+1. Value & Relevance:
+   - How well does this address your needs and pain points?
+   - Are the benefits clear and meaningful to you?
+   - What aspects matter most to your situation?
+2. Practical Application:
+   - How would this fit into your current workflow?
+   - What challenges do you see in adopting this?
+   - What support or resources would you need?
+3. Cost & Benefit Analysis:
+   - Is the value proposition compelling for your needs?
+   - What return on investment do you anticipate?
+   - What hidden costs or efforts do you foresee?
+4. Comparison & Alternatives:
+   - How does this compare to your current solution?
+   - What advantages stand out to you?
+   - What concerns would prevent you from adopting this?
+Remember (IMPORTANT):
+- Your feedback should be based on your real-world needs and experiences while considering the presentation's stated purpose.
+- Giving feedback on all above categories is not important. If there is no feedback, return an empty array for that category.
+- You must give atleast one feedback.
+-------
+Remember
+- You don't have access to visual elements of media in the presentation. Only text of the presentation. Do no give feedback on the visual or audio parts of the presentation.
+
+OUTPUT
+- You MUST mention the slide number or content of the presentation to make the feedback more specific (If applicable). Feedback without slide number refernce, or to the presentation as a whole, is perfectly acceptible.
+- Split feedback into strengths and improvements - discussing the positive feedback in former and improvements in the latter.
+  - For feedback's strength, present the top 6 or less strengths. (No strengths is also a valid response). Less and concise is better.
+	- For feedback's improvements, present the top 6 or less improvements only. (No improvements is also a valid response). Less and concise is better.
+  - Within each feedback, write the criteria that is being evaulated as the feedback title, followed by the feedback.
+  - Example:
+    - Strengths:
+      - Value & Relevance: The presentation addresses the needs and pain points well.
+      - Practical Application: The presentation fits well into the current workflow.
+    - Improvements:
+      - **Cost & Benefit Analysis**: The value proposition is not compelling. Slide 2 and 3 have some mention of it, but it is not clear. Maybe continuing the thread on slide 4 would help.
+      - **Comparison & Alternatives**: The comparison to the current solution is not clear. Add more definite competitor analysis with statistics, after slide 7, where you mention the competitors.
+- No feedback is also a valid output.
+- Ensure feedbacks are succinct and not overly wordy. 
+- ONLY give the feedback, DO NOT print the criteria separately, or personality description, or powerpoint information.
+"""
+
+    QNA_PROMPT = """
+From the perspective of the above persona, considering their different perspective, behavior, characterstics and biases, ask CRITICAL questions about the content of the presentation to help the presenter prepare for a real presentation.
+
+You MUST:
+- Ask questions about the powerpoint presentation and its content.
+- Reference the slide number or content of the presentation (if questions are particular to a slide).
+- Questions can be about the powerpoint presentation as a whole as well. 
+- Questions must be critical and intelligent, and pertinent to the presentation content.
+- Ensure that the questions are not generic, but highly specific to the persona's personality and background. It must be critical feedback that will improve the presentation and must leverage the fact that personas have different interests, behaviors, personalities etc to improve the feedback provided to make it personalized and subjective.
+- Clearly define the different categories for the questions you are asking. And ensure that you ask questions for these categories.
+- IMPORTANT You only have access to the presentation text, not to the presentation itself. No point asking questions about the visual or audio elements.
+- IMPORTANT You must consider questions around addressing diversity and accessibility in the presentation content.
+- IMPORTANT Provide atleast 1 question
+- Within each question, write the criteria that is being evaulated as the question title, followed by the question.
+  - Example:
+    - Value & Relevance: What value does this presentation bring to the user? Specifically, in slide 2, how does the presentation address the user's needs?
+    - Practical Application: (Slide 3) Does the presentation fit into the user's current workflow? How does the presentation help the user in their daily tasks?
+    - Cost & Benefit Analysis: What is the value proposition of the presentation? How does the presentation benefit the user?
+    - Comparison & Alternatives: As per slide 7, how does the presentation compare to the current solution? What advantages does the presentation have over the current solution?
+- ONLY GIVE max of 5 questions. Less and concise is better.
+"""
+
+    OUTPUT_SUPPORT_PROMPT = """
+Give your output between $#$ tags.
+"""
 class Config:
   MAX_RETRY_DEFAULT = 3
 

@@ -27,7 +27,7 @@ export function PersonaSettings({
   if (!isOpen || !persona) return null;
 
   return (
-    <div className={`${styles.personaSettingsPanel} ${isOpen ? styles.open : ''}`}>
+    <div className={styles.personaSettingsPanel}>
       <div className={styles.panelHeader}>
         <h3>{persona.name || 'Persona'} Settings</h3>
         <button 
