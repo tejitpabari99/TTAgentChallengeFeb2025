@@ -84,7 +84,7 @@ class GPTPersonaAction:
         self.result = self._parse_result(gpt.continue_conversation(self.ppt.ppt_and_slide_prompt() + 
                                                 self.prompt.format_map(updateDict) + 
                                                 Constants.Prompts.GPT.OUTPUT_SUPPORT_PROMPT)['response'])
-        logger.debug("{self.type} GPT Persona Result: " + self.result)
+        logger.debug(f"{self.type} GPT Persona Result: {self.result}")
 
     def _parse_result(self, result: str) -> str:
         if result and '$#$' in result:
